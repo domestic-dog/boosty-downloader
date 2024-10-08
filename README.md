@@ -13,6 +13,7 @@ be used as scheduled job to download new videos and make them available in Plex.
 # install latest yt-dlp using pip in virtual environment
 apt-get update
 mkdir -p /srv/yt-dlp
+mkdir -p  /media/MediaFiles
 cd /srv/yt-dlp
 apt install python3-venv -y
 python3 -m venv .
@@ -64,7 +65,7 @@ boosty-downloader
 Create service unit:
 
 ```
-nano /etc/systemd/system/boosty-downloader.service
+tee /etc/systemd/system/boosty-downloader.service <<EOF
 
 [Unit]
 Wants=boosty-downloader.timer
@@ -82,12 +83,13 @@ ExecStart=boosty-downloader
 
 [Install]
 WantedBy=multi-user.target
+EOF
 ```
 
 Create timer unit:
 
 ```
-nano /etc/systemd/system/boosty-downloader.timer
+tee  /etc/systemd/system/boosty-downloader.timer <<EOF
 
 [Unit]
 Requires=boosty-downloader.service
@@ -98,6 +100,7 @@ OnCalendar=hourly
 
 [Install]
 WantedBy=timers.target
+EOF
 ```
 
 ```sh
@@ -110,6 +113,7 @@ systemctl status boosty-downloader
 journalctl -u boosty-downloader
 # if all is ok, enable timer
 systemctl enable boosty-downloader.timer
+
 ```
 
 ## Plex rescan
