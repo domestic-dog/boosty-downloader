@@ -11,9 +11,10 @@ be used as scheduled job to download new videos and make them available in Plex.
 
 ```sh
 # install latest yt-dlp using pip in virtual environment
+apt-get update
 mkdir -p /srv/yt-dlp
 cd /srv/yt-dlp
-apt install python3-venv
+apt install python3-venv -y
 python3 -m venv .
 ./bin/pip3 install yt-dlp
 
