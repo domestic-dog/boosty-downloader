@@ -160,18 +160,40 @@ main() {
         echo "Downloading list of media for channel $channel"
         list_media "$channel" "$TARGET_PATH" \
             | while IFS=$'\t' read -r id blog timestamp title type exists; do
-                if [ -n "$exists" ]; then
-                    echo "Skipping media $id ($title) - already exists"
-                elif [ "$type" != "video" ]; then
-                    echo "Skipping media $id ($title) - not a video"
-                else
-                    echo "Downloading media file $id ($title)"
-                    season="$(date -d "@$timestamp" +'%Y')"
-                    episode="$(date -d "@$timestamp" +'%m%d01')"
-                    mkdir -p "$TARGET_PATH/$channel/Season $season" && cd "$_"
-                    download_video "$channel" "$id" "$season" "$episode" 2>&1 | tee "$log_file"
-                    send_notification "$NOTIFY_EMAIL" "$channel" "$season" "$episode" "$log_file" "$telegram_token" "$telegram_chat_id"
-                fi
+            if [ -z "$TElEGRAM_UPLOAD" ];then
+                    if [ -n "$exists" ]; then
+                        echo "Skipping media $id ($title) - already exists"
+                    elif [ "$type" != "video" ]; then
+                        echo "Skipping media $id ($title) - not a video"
+                    else
+                        echo "Downloading media file $id ($title)"
+                        season="$(date -d "@$timestamp" +'%Y')"
+                        episode="$(date -d "@$timestamp" +'%m%d01')"
+                        mkdir -p "$TARGET_PATH/$channel/Season $season" && cd "$_"
+                        download_video "$channel" "$id" "$season" "$episode" 2>&1 | tee "$log_file"      
+                        echo "$TARGET_PATH/$channel/Season $season" >> $TARGET_PATH/history
+                        curl -X POST \
+                            -H "Content-Type:multipart/form-data" \
+                            -F document=@"$TARGET_PATH/$channel/Season $season" \
+                            "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendDocument" 
+                      #  send_notification "$NOTIFY_EMAIL" "$channel" "$season" "$episode" "$log_file" "$telegram_token" "$telegram_chat_id"
+            else
+
+                    if [ -n "$exists" ]; then
+                        echo "Skipping media $id ($title) - already exists"
+                    elif [ "$type" != "video" ]; then
+                        echo "Skipping media $id ($title) - not a video"
+                    else
+                        echo "Downloading media file $id ($title)"
+                        season="$(date -d "@$timestamp" +'%Y')"
+                        episode="$(date -d "@$timestamp" +'%m%d01')"
+                        mkdir -p "$TARGET_PATH/$channel/Season $season" && cd "$_"
+                        download_video "$channel" "$id" "$season" "$episode" 2>&1 | tee "$log_file"
+                        
+                        send_notification "$NOTIFY_EMAIL" "$channel" "$season" "$episode" "$log_file" "$telegram_token" "$telegram_chat_id"
+    
+                    fi
+            fi
             done
     done
 }
